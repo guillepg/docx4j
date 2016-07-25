@@ -14,10 +14,8 @@
 	<packaging>jar</packaging>
 	<name>docx4j</name>
 	
-	<description>
-		docx4j is a library which helps you to work with the Office Open
-		XML file format as used in docx
-		documents, pptx presentations, and xlsx spreadsheets.
+	<description>docx4j is a library which helps you to work with the Office Open XML file format as used
+in docx documents, pptx presentations, and xlsx spreadsheets.
 	</description>
 	<url>http://www.docx4java.org/</url>
 	<licenses>

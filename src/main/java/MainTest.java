@@ -15,7 +15,7 @@ import org.docx4j.wml.SdtBlock;
  */
 public class MainTest {
     
-    final static String PATH = "C:\\Users\\a940\\Desktop\\";
+    final static String PATH = "C:/Users/a940/Desktop/CSCAE/";
     
     static String inputfilepath = PATH+"antes.docx";
     static String outputfilepath = PATH+"despues.docx";    
@@ -25,9 +25,10 @@ public class MainTest {
     public static void main(String[] args){
         try{
             leerTituloDocumento(inputLectura);
+            System.out.println("----------");
+            leerDocumentoCompleto(inputLectura);
+            System.out.println("----------");
             leerTablaContenidos(inputLectura);
-//            escribirToc1();
-//            escribirToc2();        
         }catch(Exception ex){
             ex.printStackTrace();
         }
@@ -38,11 +39,18 @@ public class MainTest {
         System.out.println("title: "+WMLP.getTitle());
     }
     
-    public static void leerTablaContenidos(String ruta){
-//        WordprocessingMLPackage WMLP = WordprocessingMLPackage.load(new File(ruta));
+    public static void leerTablaContenidos(String ruta) throws Docx4JException{
+        WordprocessingMLPackage WMLP = WordprocessingMLPackage.load(new File(ruta));
+        SdtBlock tabla = (SdtBlock) WMLP.getMainDocumentPart().getContent().get(1);
+        System.out.println(tabla.getSdtContent().getContent());
 //        SdtBlock sdt = getTocSDT(WMLP);
 //        TocFinder tocf = new TocFinder();
 //        System.out.println("tocSDT: "+tocf.getTocSDT().toString());
+    }
+    
+    public static void leerDocumentoCompleto(String ruta) throws Docx4JException{
+        WordprocessingMLPackage WMLP = WordprocessingMLPackage.load(new File(ruta));
+        System.out.println(WMLP.getMainDocumentPart().getXML());
     }
     
     public static void escribirToc1() throws Docx4JException{
@@ -61,8 +69,7 @@ public class MainTest {
         TocGenerator tocGenerator = new TocGenerator(WMLP);		
         tocGenerator.generateToc( 0, " TOC \\o \"1-3\" \\h \\z \\u ", true);
 //        SdtBlock sdt = getTocSDT(MLP);
-//        System.out.println(sdt.getSdtContent().getContent().size());        
-        System.out.println(WMLP.getMainDocumentPart().getXML());
+//        System.out.println(sdt.getSdtContent().getContent().size());  
     }
     
     //<editor-fold defaultstate="collapsed" desc="METODOS AUXILIARES">    

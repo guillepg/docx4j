@@ -1,6 +1,13 @@
 package org.docx4j.toc;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.bind.JAXBElement;
@@ -23,87 +30,90 @@ import org.docx4j.wml.Text;
 public class TocGenerateTest {
 
     static final String TOC_STYLE_MASK = "TOC%s";
-    final static String PATH = "C:/Users/a940/Desktop/CSCAE/"; 
-    static String inputLectura = PATH + "contabla.docx";	
-    static String inputfilepath = PATH + "antes.docx";
-    static String outputfilepath = PATH + "despues.docx";
+    final static String PATH = "C:/Users/a940/Desktop/CSCAE/";
+    
+    static String input = PATH + "docx4j/Docx4j_GettingStarted_sinToC.docx";
+    static String inputcontabla = PATH + "tabla_con.docx";
+    static String inputsintabla = PATH + "tabla_sin.docx";
+    static String outputDOCX = PATH + "output.docx";
+    static String plantilla = PATH + "docx4j plantillaTOC.xml";
+    static String outputXML = PATH + "docx4j ejemplo.xml";
 	
 //    @Test
-    public void testPropioLectura(){
+    public void testLecturaPartesXML(){
         try {
-            WordprocessingMLPackage WMLP = WordprocessingMLPackage.load(new File(inputLectura));
+            // Lectura de MainDocument y escritura en XML
+//            WordprocessingMLPackage WMLP = WordprocessingMLPackage.load(new File(inputcontabla));
+//            String ficheroXML = WMLP.getMainDocumentPart().getXML();
+//            PrintWriter pw = new PrintWriter(outputXML);
+//            pw.write(ficheroXML);
+//            pw.close();
+
+            // Lectura de DocumentSettings
+//            String settingsXML = WMLP.getMainDocumentPart().getDocumentSettingsPart().getXML();
+//            if(settingsXML.contains("updateFields")){/*comprobar si es true*/}
+//            else{/*añadir campo en linea ultima-1*/}   
+            
+            // Lectura de Table of Content
 //            SdtBlock sdt = getTocSDT(WMLP);
 //            leerBloqueSdt(sdt);
-            System.out.println("Fichero en formato XML: " + WMLP.getMainDocumentPart().getXML());
-        } catch (Docx4JException ex) {
+            
+        } catch (Exception ex) {
             Logger.getLogger(TocGenerateTest.class.getName()).log(Level.INFO, null, "ERROR EN LECTURA");
             Logger.getLogger(TocGenerateTest.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
     
-//    @Test
-    public void testPropioEscritura(){
+//    @Test // NOT USEFUL
+    public void testCreacionManual(){
         try {
-            WordprocessingMLPackage WMLP = WordprocessingMLPackage.load(new File(inputfilepath));
-            TocGenerator tocGen = new TocGenerator(WMLP);
-            tocGen.generateToc(0,"TOC \\o \"1-3\" \\h \\z \\u ",false);
+            // 0 -> Titulo
+            // 1 -> Tabulacion (default: 8494)
+            // 2 -> TOC \\o "1-3" \\h \\z \\u
+//            WordprocessingMLPackage WMLP = WordprocessingMLPackage.load(new File(inputsintabla));
+            String text = new String(Files.readAllBytes(Paths.get(plantilla)), StandardCharsets.UTF_8);
+            
+            text = text.replace("{0}","titulo");
+            text = text.replace("{1}","8494");
+            text = text.replace("{2}","TOC \\o \"1-3\" \\h \\z \\u");
+            System.out.println(text);
+            
             Logger.getLogger(TocGenerateTest.class.getName()).log(Level.INFO, "Escritura OK", "");
-        } catch (Docx4JException ex) {
+        } catch (Exception ex) {
             Logger.getLogger(TocGenerateTest.class.getName()).log(Level.INFO, "ERROR EN ESCRITURA", "");
             Logger.getLogger(TocGenerateTest.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
     
-    @Test
-    public void testPropioActualizacion(){
+    @Test // WORKING FINE
+    public void testCreacionAuto(){
         try {
-            WordprocessingMLPackage WMLP = WordprocessingMLPackage.load(new File(inputLectura));
+            WordprocessingMLPackage WMLP = WordprocessingMLPackage.load(new File(input));
             TocGenerator tocGen = new TocGenerator(WMLP);
-            SdtBlock tabla = tocGen.updateToc(false);
-            
-            Logger.getLogger(TocGenerateTest.class.getName()).log(Level.INFO, "Actualizacion OK", "");
-//            leerBloqueSdt(tabla);
-
-            P pe = (P) tabla.getSdtContent().getContent().get(2);
-            JAXBElement jaxb = (JAXBElement) pe.getContent().get(0);
-            Hyperlink link = (Hyperlink) jaxb.getValue();
-            R erre = (R) link.getContent().get(0);
-            Text texto = (Text) erre.getContent().get(0);
-            texto.setValue(texto.getValue()+" NUEVO");
-            System.out.println("Texto: "+ texto.getValue());
-            
-            tocGen.generateToc(tabla, "TOC \\o \"1-3\" \\h \\z \\u ", false);
+            tocGen.generateToc(1, "TOC \\o \"1-3\" \\h \\z \\u ", false);
+            WMLP.save(new File(outputDOCX));
+            Logger.getLogger(TocGenerateTest.class.getName()).log(Level.INFO, "testCreacionAuto OK!", "");
         } catch (Exception ex) {
-            Logger.getLogger(TocGenerateTest.class.getName()).log(Level.INFO, "ERROR EN ACTUALIZACION", "");
             Logger.getLogger(TocGenerateTest.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
     
-    private void leerBloqueSdt(SdtBlock sdt){
-        int size = sdt.getSdtContent().getContent().size();
-        System.out.println("leerBloqueSdt size: " + size); 
+//    @Test // WORKING FINE
+    public void testActualizacion(){
+        try {
+            WordprocessingMLPackage WMLP = WordprocessingMLPackage.load(new File(inputcontabla));
+            TocGenerator tocGen = new TocGenerator(WMLP);
+            tocGen.updateToc(false);
+            WMLP.save(new File(outputDOCX));
+            Logger.getLogger(TocGenerateTest.class.getName()).log(Level.INFO, "testPropioActualizacion OK!", "");
 
-        for(int i=0;i<size;i++){
-            P pe = (P) sdt.getSdtContent().getContent().get(i);
-            int subsize = pe.getContent().size();
-            System.out.println("testPropioLectura elem "+i+": " + pe.getContent());
-            System.out.println("testPropioLectura elem "+i+": size " + pe.getContent().size());
-
-            for(int j=0;j<subsize;j++){
-                if(pe.getContent().get(j).getClass() == R.class){
-                    R erre = (R) pe.getContent().get(j);
-                    System.out.println("subelem R "+i+"."+j+": " + erre.getContent());
-                }
-                else if(pe.getContent().get(j).getClass() == JAXBElement.class){
-                    JAXBElement jaxb = (JAXBElement) pe.getContent().get(j);
-                    System.out.println("subelem JaxB "+i+"."+j+": " + jaxb.getName() + " - " + jaxb.getValue());
-                }
-                else
-                    System.out.println("subelem else "+i+"."+j+": " + pe.getContent().get(j));
-            }
+        } catch (Exception ex) {
+            Logger.getLogger(TocGenerateTest.class.getName()).log(Level.INFO, "ERROR EN ACTUALIZACION", "");
+            Logger.getLogger(TocGenerateTest.class.getName()).log(Level.SEVERE, null, ex);
         }
-    }
+    } 
     
+    /* --------------------- CÓDIGO YA EXISTENTE --------------------- */
 //    @Test
     public void testGeneral() throws TocException, Exception {
 
@@ -171,7 +181,6 @@ public class TocGenerateTest {
         /*Title p + instruction p +  3 entries + end p*/
         Assert.assertEquals(6, sdt.getSdtContent().getContent().size());
     }
-
 
 //    @Test
     public void testHeadingTrumpsOutline() throws TocException, Exception {
@@ -243,7 +252,44 @@ public class TocGenerateTest {
 
         Docx4J.save(wordMLPackage, new File("testToCHeadingSet.docx"));
     }
-	
+
+    /* --------------------- MÉTODOS AUXILIARES --------------------- */
+    private void leerBloqueSdt(SdtBlock sdt){
+        int size = sdt.getSdtContent().getContent().size();
+        System.out.println("leerBloqueSdt size: " + size);
+
+        for(int i=0;i<size;i++){
+            P pe = (P) sdt.getSdtContent().getContent().get(i);
+            int subsize = pe.getContent().size();
+            System.out.println("testPropioLectura elem "+i+": " + pe.getContent());
+            System.out.println("testPropioLectura elem "+i+": size " + pe.getContent().size());
+
+            for(int j=0;j<subsize;j++){
+                if(pe.getContent().get(j).getClass().equals(R.class)){
+                    R run = (R) pe.getContent().get(j);
+                    System.out.println("subelem R"+i+"."+j+": "+run.getRsidR()+" - "+run.getRsidRPr());
+                }
+                else if(pe.getContent().get(j).getClass().equals(JAXBElement.class)){
+                    JAXBElement jaxb = (JAXBElement) pe.getContent().get(j);
+                    System.out.println("subelem JAXB "+i+"."+j+": " + jaxb.getValue());
+                }
+            }
+        }
+    }
+            
+//    for(int i=0;i<tabla.getSdtContent().getContent().size();i++){
+//        try {
+//            P pe = (P) tabla.getSdtContent().getContent().get(i);
+//            JAXBElement jaxb = (JAXBElement) pe.getContent().get(0);
+//            Hyperlink link = (Hyperlink) jaxb.getValue();
+//            R erre = (R) link.getContent().get(0);
+//            Text texto = (Text) erre.getContent().get(0);
+//            texto.setValue(texto.getValue()+" NUEVO");
+//            System.out.println("Texto: "+ texto.getValue());
+//        } 
+//        catch (Exception ex) {}                
+//    }
+    
     private SdtBlock getTocSDT(WordprocessingMLPackage wordMLPackage) {
 
         MainDocumentPart documentPart = wordMLPackage.getMainDocumentPart();

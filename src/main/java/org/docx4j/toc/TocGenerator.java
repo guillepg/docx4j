@@ -69,13 +69,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class TocGenerator {
 	
-	private static Logger log = LoggerFactory.getLogger(TocGenerator.class);	
+    private static Logger log = LoggerFactory.getLogger(TocGenerator.class);	
 
-	private WordprocessingMLPackage wordMLPackage;
-	
-	public WordprocessingMLPackage getWordMLPackage() {
-		return wordMLPackage;
-	}
+    private WordprocessingMLPackage wordMLPackage;
+
+    public WordprocessingMLPackage getWordMLPackage() {
+        return wordMLPackage;
+    }
 
 	
 //	boolean skipPageNumbering;
@@ -84,13 +84,13 @@ public class TocGenerator {
 //		this.skipPageNumbering = skipPageNumbering;
 //	}
 
-	/**
-	 * From sectPr, we can get PageDimensions, which is used for
-	 * calculating position of the right aligned tab for page numbers.
-	 */
-	private SectPr sectPr;
+    /**
+     * From sectPr, we can get PageDimensions, which is used for
+     * calculating position of the right aligned tab for page numbers.
+     */
+    private SectPr sectPr;
 	
-	private TocGenerator() {}
+    private TocGenerator() {}
 
 //	/**
 //	 * @param docxFile
@@ -109,22 +109,22 @@ public class TocGenerator {
 //		this.tocStyles = getTocStyles(wordMLPackage.getMainDocumentPart());
 //	}
 	
-	public TocGenerator(WordprocessingMLPackage wordMLPackage) throws TocException {
-		
-		this.wordMLPackage = wordMLPackage;
-		this.tocStyles = getTocStyles(wordMLPackage.getMainDocumentPart());
-	}
-	
-	private TocStyles tocStyles = null;	
-	private TocStyles getTocStyles(MainDocumentPart documentPart) throws TocException {
+    public TocGenerator(WordprocessingMLPackage wordMLPackage) throws TocException {
+
+            this.wordMLPackage = wordMLPackage;
+            this.tocStyles = getTocStyles(wordMLPackage.getMainDocumentPart());
+    }
+
+    private TocStyles tocStyles = null;	
+    private TocStyles getTocStyles(MainDocumentPart documentPart) throws TocException {
 //      Styles styles = null;
-      if (documentPart.getStyleDefinitionsPart()==null
-      		|| documentPart.getStyleDefinitionsPart().getJaxbElement()==null) {
-      	throw new TocException("No StyleDefinitions present in package");
-      }
+        if (documentPart.getStyleDefinitionsPart()==null
+            || documentPart.getStyleDefinitionsPart().getJaxbElement()==null) {
+            throw new TocException("No StyleDefinitions present in package");
+        }
       return new TocStyles(documentPart.getStyleDefinitionsPart());
 		
-	}
+    }
 
     /**
      * Generate Table of Contents using default TOC instruction, adding it at the beginning of the document

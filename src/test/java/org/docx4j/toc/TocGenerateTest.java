@@ -1,21 +1,21 @@
 package org.docx4j.toc;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.bind.JAXBElement;
 import junit.framework.Assert;
-import org.docx4j.Docx4J;
 import org.junit.Test;
 
+import org.docx4j.Docx4J;
 import org.docx4j.TraversalUtil;
+import org.docx4j.openpackaging.exceptions.Docx4JException;
 import org.docx4j.openpackaging.packages.WordprocessingMLPackage;
 import org.docx4j.openpackaging.parts.WordprocessingML.MainDocumentPart;
 import org.docx4j.wml.Body;
@@ -23,31 +23,44 @@ import org.docx4j.wml.Document;
 import org.docx4j.wml.SdtBlock;
 import org.docx4j.wml.P;
 import org.docx4j.wml.R;
-import org.docx4j.openpackaging.exceptions.Docx4JException;
-import org.docx4j.wml.P.Hyperlink;
-import org.docx4j.wml.Text;
+import org.docx4j.openpackaging.parts.Part;
+import org.docx4j.relationships.Relationship;
+import org.docx4j.wml.Style;
 
 public class TocGenerateTest {
 
     static final String TOC_STYLE_MASK = "TOC%s";
-    final static String PATH = "C:/Users/a940/Desktop/CSCAE/";
+    final static String PATH = "C:/Users/a940/Desktop/";
     
-    static String input = PATH + "docx4j/Docx4j_GettingStarted_sinToC.docx";
-    static String inputcontabla = PATH + "tabla_con.docx";
-    static String inputsintabla = PATH + "tabla_sin.docx";
+    static String input = PATH + "fichero prueba parrafos.docx";
+    static String inputcontabla = PATH + "CSCAE/tabla_con.docx";
+    static String inputsintabla = PATH + "CSCAE/tabla_sin.docx";
+    static String inputEstilos = PATH + "CSCAE/styles.DOCX";
+    static String inputCSCAE = PATH + "Huesca.docx";
+    
+    static String outputXML1 = PATH + "estilos1.xml"; //CSCAE/txt/
+    static String outputXML2 = PATH + "estilos2.xml";    
     static String outputDOCX = PATH + "output.docx";
-    static String plantilla = PATH + "docx4j plantillaTOC.xml";
-    static String outputXML = PATH + "docx4j ejemplo.xml";
-	
-//    @Test
+
+    static final String FOOTER_TYPE = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer";
+    
+    @Test // MODIFICABLE PARA LEER DISTINTAS PARTES
     public void testLecturaPartesXML(){
         try {
             // Lectura de MainDocument y escritura en XML
-//            WordprocessingMLPackage WMLP = WordprocessingMLPackage.load(new File(inputcontabla));
-//            String ficheroXML = WMLP.getMainDocumentPart().getXML();
-//            PrintWriter pw = new PrintWriter(outputXML);
-//            pw.write(ficheroXML);
-//            pw.close();
+            WordprocessingMLPackage WMLP1 = WordprocessingMLPackage.load(new File(inputEstilos));
+            System.out.println("Reading " + WMLP1.name());                        
+            String stylesXML1 = WMLP1.getMainDocumentPart().getStyleDefinitionsPart(false).getXML();
+            PrintWriter pw1 = new PrintWriter(outputXML1);
+            pw1.write(stylesXML1);
+            pw1.close();
+            
+            WordprocessingMLPackage WMLP2 = WordprocessingMLPackage.load(new File(inputcontabla));
+            System.out.println("Reading " + WMLP2.name());            
+            String stylesXML2 = WMLP2.getMainDocumentPart().getStyleDefinitionsPart(false).getXML();
+            PrintWriter pw2 = new PrintWriter(outputXML2);
+            pw2.write(stylesXML2);
+            pw2.close();
 
             // Lectura de DocumentSettings
 //            String settingsXML = WMLP.getMainDocumentPart().getDocumentSettingsPart().getXML();
@@ -58,43 +71,25 @@ public class TocGenerateTest {
 //            SdtBlock sdt = getTocSDT(WMLP);
 //            leerBloqueSdt(sdt);
             
+        } catch (Docx4JException docxex) {
+            Logger.getLogger(TocGenerateTest.class.getName()).log(Level.SEVERE, "ERROR DE DOCX4J", docxex);
+        } catch (FileNotFoundException fnfex) {
+            Logger.getLogger(TocGenerateTest.class.getName()).log(Level.SEVERE, "ERROR DE LECTURA EN FICHERO", fnfex);
         } catch (Exception ex) {
-            Logger.getLogger(TocGenerateTest.class.getName()).log(Level.INFO, null, "ERROR EN LECTURA");
-            Logger.getLogger(TocGenerateTest.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(TocGenerateTest.class.getName()).log(Level.SEVERE, "EXCEPCION", ex);
         }
     }
-    
-//    @Test // NOT USEFUL
-    public void testCreacionManual(){
-        try {
-            // 0 -> Titulo
-            // 1 -> Tabulacion (default: 8494)
-            // 2 -> TOC \\o "1-3" \\h \\z \\u
-//            WordprocessingMLPackage WMLP = WordprocessingMLPackage.load(new File(inputsintabla));
-            String text = new String(Files.readAllBytes(Paths.get(plantilla)), StandardCharsets.UTF_8);
-            
-            text = text.replace("{0}","titulo");
-            text = text.replace("{1}","8494");
-            text = text.replace("{2}","TOC \\o \"1-3\" \\h \\z \\u");
-            System.out.println(text);
-            
-            Logger.getLogger(TocGenerateTest.class.getName()).log(Level.INFO, "Escritura OK", "");
-        } catch (Exception ex) {
-            Logger.getLogger(TocGenerateTest.class.getName()).log(Level.INFO, "ERROR EN ESCRITURA", "");
-            Logger.getLogger(TocGenerateTest.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-    
-    @Test // WORKING FINE
+   
+//    @Test // WORKING FINE
     public void testCreacionAuto(){
         try {
-            WordprocessingMLPackage WMLP = WordprocessingMLPackage.load(new File(input));
+            WordprocessingMLPackage WMLP = WordprocessingMLPackage.load(new File(inputCSCAE));
             TocGenerator tocGen = new TocGenerator(WMLP);
-            tocGen.generateToc(1, "TOC \\o \"1-3\" \\h \\z \\u ", false);
+            tocGen.generateToc(0, "TOC \\o \"1-4\" \\h \\z \\u ", false);
             WMLP.save(new File(outputDOCX));
             Logger.getLogger(TocGenerateTest.class.getName()).log(Level.INFO, "testCreacionAuto OK!", "");
         } catch (Exception ex) {
-            Logger.getLogger(TocGenerateTest.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(TocGenerateTest.class.getName()).log(Level.SEVERE, "ERROR EN CREACION", ex);
         }
     }
     
@@ -108,12 +103,32 @@ public class TocGenerateTest {
             Logger.getLogger(TocGenerateTest.class.getName()).log(Level.INFO, "testPropioActualizacion OK!", "");
 
         } catch (Exception ex) {
-            Logger.getLogger(TocGenerateTest.class.getName()).log(Level.INFO, "ERROR EN ACTUALIZACION", "");
-            Logger.getLogger(TocGenerateTest.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(TocGenerateTest.class.getName()).log(Level.SEVERE, "ERROR EN ACTUALIZACION", ex);
         }
     } 
+     
+//    @Test // NOT USEFUL
+    public void testCreacionManual(){
+        try {
+            // 0 -> Titulo
+            // 1 -> Tabulacion (default: 8494)
+            // 2 -> TOC \\o "1-3" \\h \\z \\u
+//            WordprocessingMLPackage WMLP = WordprocessingMLPackage.load(new File(inputsintabla));
+//            String text = new String(Files.readAllBytes(Paths.get(plantilla)), StandardCharsets.UTF_8);
+//            
+//            text = text.replace("{0}","titulo");
+//            text = text.replace("{1}","8494");
+//            text = text.replace("{2}","TOC \\o \"1-3\" \\h \\z \\u");
+//            System.out.println(text);
+//            
+//            Logger.getLogger(TocGenerateTest.class.getName()).log(Level.INFO, "Escritura OK", "");
+        } catch (Exception ex) {
+            Logger.getLogger(TocGenerateTest.class.getName()).log(Level.SEVERE, "ERROR EN ESCRITURA", ex);
+        }
+    }
     
-    /* --------------------- CÓDIGO YA EXISTENTE --------------------- */
+    
+    //<editor-fold defaultstate="collapsed" desc="codigo anterior">
 //    @Test
     public void testGeneral() throws TocException, Exception {
 
@@ -327,5 +342,6 @@ public class TocGenerateTest {
         for(int i = 0; i < 2; i++){
             documentPart.addStyledParagraphOfText("Normal", content + " paragraph " + i);
         }
-    }
+    }    
+    //</editor-fold>
 }

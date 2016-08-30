@@ -110,7 +110,7 @@ public class TocStyles {
         defaultPStyleId = sdp.getDefaultParagraphStyle().getStyleId();
 
         for (Style s : stylesPartStyles.getStyle()) {
-			
+        
             if (s.getName().getVal().startsWith("toc")
                 || s.getName().getVal().equals(defaultPStyleName)
                 || s.getName().getVal().equals(TOC_HEADING)

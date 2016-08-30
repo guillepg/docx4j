@@ -1,16 +1,19 @@
 package org.docx4j.toc;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.PrintWriter;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.math.BigInteger;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.bind.JAXBElement;
 import junit.framework.Assert;
+import org.apache.poi.openxml4j.opc.OPCPackage;
+import org.apache.poi.xwpf.usermodel.XWPFAbstractNum;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.junit.Test;
 
 import org.docx4j.Docx4J;
@@ -18,28 +21,29 @@ import org.docx4j.TraversalUtil;
 import org.docx4j.openpackaging.exceptions.Docx4JException;
 import org.docx4j.openpackaging.packages.WordprocessingMLPackage;
 import org.docx4j.openpackaging.parts.WordprocessingML.MainDocumentPart;
+import org.apache.poi.xwpf.usermodel.XWPFNumbering;
 import org.docx4j.wml.Body;
 import org.docx4j.wml.Document;
 import org.docx4j.wml.SdtBlock;
 import org.docx4j.wml.P;
 import org.docx4j.wml.R;
-import org.docx4j.openpackaging.parts.Part;
-import org.docx4j.relationships.Relationship;
-import org.docx4j.wml.Style;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTLvl;
+//import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTMultiLevelType;
 
 public class TocGenerateTest {
 
     static final String TOC_STYLE_MASK = "TOC%s";
-    final static String PATH = "C:/Users/a940/Desktop/";
+    final static String PATH = "C:/Users/a940/Desktop/CSCAE/";
     
-    static String input = PATH + "fichero prueba parrafos.docx";
-    static String inputcontabla = PATH + "CSCAE/tabla_con.docx";
-    static String inputsintabla = PATH + "CSCAE/tabla_sin.docx";
-    static String inputEstilos = PATH + "CSCAE/styles.DOCX";
-    static String inputCSCAE = PATH + "Huesca.docx";
+//    static String inputParrafos = PATH + "ejemplos/fichero prueba parrafos.docx";
+//    static String inputConTabla = PATH + "ejemplos/tabla_con.docx";
+//    static String inputSinTabla = PATH + "ejemplos/tabla_sin.docx";
+    static String inputEstilos = PATH + "ejemplos/styles.DOCX";
+    static String inputConLista = PATH + "ejemplos/listaejemplo.docx";
+    static String inputCSCAE = PATH + "Rioja.docx";
     
-    static String outputXML1 = PATH + "estilos1.xml"; //CSCAE/txt/
-    static String outputXML2 = PATH + "estilos2.xml";    
+    static String outputXML1 = PATH + "salida1.xml";
+    static String outputXML2 = PATH + "salida2.xml";    
     static String outputDOCX = PATH + "output.docx";
 
     static final String FOOTER_TYPE = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer";
@@ -47,26 +51,49 @@ public class TocGenerateTest {
     @Test // MODIFICABLE PARA LEER DISTINTAS PARTES
     public void testLecturaPartesXML(){
         try {
-            // Lectura de MainDocument y escritura en XML
-            WordprocessingMLPackage WMLP1 = WordprocessingMLPackage.load(new File(inputEstilos));
-            System.out.println("Reading " + WMLP1.name());                        
-            String stylesXML1 = WMLP1.getMainDocumentPart().getStyleDefinitionsPart(false).getXML();
+            XWPFDocument doc = new XWPFDocument(XWPFDocument.openPackage(inputConLista));
+            XWPFNumbering numbering = doc.getNumbering();
             PrintWriter pw1 = new PrintWriter(outputXML1);
-            pw1.write(stylesXML1);
-            pw1.close();
-            
-            WordprocessingMLPackage WMLP2 = WordprocessingMLPackage.load(new File(inputcontabla));
-            System.out.println("Reading " + WMLP2.name());            
-            String stylesXML2 = WMLP2.getMainDocumentPart().getStyleDefinitionsPart(false).getXML();
-            PrintWriter pw2 = new PrintWriter(outputXML2);
-            pw2.write(stylesXML2);
-            pw2.close();
-
-            // Lectura de DocumentSettings
-//            String settingsXML = WMLP.getMainDocumentPart().getDocumentSettingsPart().getXML();
-//            if(settingsXML.contains("updateFields")){/*comprobar si es true*/}
-//            else{/*añadir campo en linea ultima-1*/}   
-            
+            if(numbering==null){
+                System.out.println(" ---> No hay numeración <--- "); 
+//                numbering = doc.createNumbering();
+//                doc.write(new FileOutputStream(outputDOCX));
+            }
+            else{
+                for(int i=0;i<10;i++){
+                    XWPFAbstractNum xwpfabsnum = numbering.getAbstractNum(BigInteger.valueOf(i));
+                    boolean copiar = false;
+                    if(xwpfabsnum!=null){
+                        pw1.write("Numbering "+i+": ");
+                        CTLvl[] array = xwpfabsnum.getAbstractNum().getLvlArray();
+                        for(int j=0;j<array.length;j++){
+                            pw1.write("\n\t"+array[j].getNumFmt().getVal().toString());
+                            pw1.write("\n\t"+array[j].getLvlText().getVal());
+                            if(array[j].getLvlText().getVal().equals("%1.%2.")){
+                                copiar = true;
+                            }
+                        }
+                        numbering.addAbstractNum(xwpfabsnum);
+                    }
+                    pw1.write("\n");
+                }
+                // Lectura de MainDocument y escritura en XML
+                WordprocessingMLPackage WMLP1 = WordprocessingMLPackage.load(new File(inputConLista));
+                System.out.println("Reading " + WMLP1.name());
+//                pw1.write("---------------------------ESTILOS-----------------------------\n");
+//                pw1.write(WMLP1.getMainDocumentPart().getStyleDefinitionsPart(false).getXML());
+                pw1.write("-------------------------NUMERACION----------------------------\n");
+                if(WMLP1.getMainDocumentPart().getNumberingDefinitionsPart() != null) 
+                    pw1.write(WMLP1.getMainDocumentPart().getNumberingDefinitionsPart().getXML());
+                else 
+                    pw1.write("No hay numeración");
+//                pw1.write("-----------------------DocumentSettings------------------------\n");
+//                pw1.write(WMLP1.getMainDocumentPart().getDocumentSettingsPart().getXML());
+                pw1.write("\n------------------------DOCUMENTO----------------------------\n");
+                pw1.write(WMLP1.getMainDocumentPart().getXML());
+                pw1.close();
+            }
+               
             // Lectura de Table of Content
 //            SdtBlock sdt = getTocSDT(WMLP);
 //            leerBloqueSdt(sdt);
@@ -96,11 +123,11 @@ public class TocGenerateTest {
 //    @Test // WORKING FINE
     public void testActualizacion(){
         try {
-            WordprocessingMLPackage WMLP = WordprocessingMLPackage.load(new File(inputcontabla));
-            TocGenerator tocGen = new TocGenerator(WMLP);
-            tocGen.updateToc(false);
-            WMLP.save(new File(outputDOCX));
-            Logger.getLogger(TocGenerateTest.class.getName()).log(Level.INFO, "testPropioActualizacion OK!", "");
+//            WordprocessingMLPackage WMLP = WordprocessingMLPackage.load(new File(inputConTabla));
+//            TocGenerator tocGen = new TocGenerator(WMLP);
+//            tocGen.updateToc(false);
+//            WMLP.save(new File(outputDOCX));
+//            Logger.getLogger(TocGenerateTest.class.getName()).log(Level.INFO, "testPropioActualizacion OK!", "");
 
         } catch (Exception ex) {
             Logger.getLogger(TocGenerateTest.class.getName()).log(Level.SEVERE, "ERROR EN ACTUALIZACION", ex);

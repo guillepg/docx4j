@@ -50,7 +50,7 @@ public class ObfuscatedFontPart extends BinaryPart {
     	// docx4all already creates a dir; no point creating a second 
 
     /** font cache file path */
-    private static final String TEMPORARY_FONT_DIR = "temporary embedded fonts";
+    private static final String TEMPORARY_FONT_DIR = "temporary_embedded_fonts";
 	
     private static File tmpFontDir = null; 
     
